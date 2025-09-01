@@ -1,17 +1,14 @@
 User-agent: *
 Allow: /
 
-# Unity WebGL 빌드 파일들 허용
+# Unity WebGL 게임 파일들 허용
 Allow: /Build/
 Allow: /TemplateData/
 Allow: /StreamingAssets/
 
-# 서비스 워커와 매니페스트 허용
-Allow: /ServiceWorker.js
+# PWA 파일들 허용
 Allow: /manifest.webmanifest
+Allow: /ServiceWorker.js
 
-# 캐시 최적화
-Disallow: /_next/
-Disallow: /api/
-
-Sitemap: https://your-domain.vercel.app/sitemap.xml
+# Sitemap (선택사항)
+# Sitemap: https://your-domain.vercel.app/sitemap.xml

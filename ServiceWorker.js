@@ -1,107 +1,123 @@
-const cacheName = "MergeGuild-1.0";
+const cacheName = "MergeGuild-Unity-WebGL-v1.0";
 const contentToCache = [
     "/",
     "/index.html",
     "/Build/f5b63b7c68733ee98df217b2cfcc2550.loader.js",
     "/Build/79f1647bdbc9ea3cc3418a3b86614b0c.framework.js.br",
-    "/Build/a2695f08e995c006b2c50afa641dc839.data.br",
+    "/Build/dfcd9f1a23137191c55a9d735cf19f32.data.br",
     "/Build/a7624d6a54ff9dbef135031d6bc9463a.wasm.br",
     "/TemplateData/style.css",
-    "/TemplateData/favicon.ico",
+    "/TemplateData/unity-logo-dark.png",
+    "/TemplateData/progress-bar-empty-dark.png",
+    "/TemplateData/progress-bar-full-dark.png",
     "/manifest.webmanifest"
 ];
 
-// 압축 파일 확장자 확인
-const isCompressedFile = (url) => {
-    return url.endsWith('.br') || url.endsWith('.gz');
-};
-
-// 압축되지 않은 파일 URL 생성 (Vercel에서 자동으로 압축 처리)
-const getUncompressedUrl = (url) => {
-    if (url.endsWith('.br')) {
-        return url.replace('.br', '');
-    }
-    return url;
-};
+// Unity WebGL 파일 확장자들
+const unityFileExtensions = ['.wasm', '.data', '.framework.js', '.loader.js', '.br'];
 
 self.addEventListener('install', function (e) {
     console.log('[Service Worker] Install');
     
     e.waitUntil((async function () {
+      try {
         const cache = await caches.open(cacheName);
-        console.log('[Service Worker] Caching app shell and content');
-        
-        // 압축되지 않은 파일들만 캐시 (Vercel이 자동으로 압축 처리)
-        const uncompressedUrls = contentToCache.map(url => getUncompressedUrl(url));
-        await cache.addAll(uncompressedUrls);
+        console.log('[Service Worker] Caching all: app shell and content');
+        await cache.addAll(contentToCache);
+        console.log('[Service Worker] All resources cached successfully');
+      } catch (error) {
+        console.error('[Service Worker] Failed to cache resources:', error);
+      }
     })());
 });
 
 self.addEventListener('fetch', function (e) {
+    // Unity WebGL 파일이나 앱 리소스인 경우에만 처리
+    const isUnityFile = unityFileExtensions.some(ext => e.request.url.includes(ext));
+    const isAppResource = e.request.url.includes(self.location.origin);
+    
+    if (!isAppResource) {
+        return; // 외부 리소스는 그대로 네트워크 요청
+    }
+
     e.respondWith((async function () {
-        const request = e.request;
-        const url = new URL(request.url);
-        
-        // 압축 파일 요청인 경우 압축되지 않은 버전으로 처리
-        if (isCompressedFile(url.pathname)) {
-            const uncompressedUrl = getUncompressedUrl(url.pathname);
-            const uncompressedRequest = new Request(uncompressedUrl, request);
-            
-            let response = await caches.match(uncompressedRequest);
-            if (response) {
-                console.log(`[Service Worker] Serving cached: ${uncompressedUrl}`);
-                return response;
+      try {
+        // Unity WebGL 파일은 항상 네트워크 우선, 실패시 캐시
+        if (isUnityFile) {
+          try {
+            const networkResponse = await fetch(e.request);
+            if (networkResponse.ok) {
+              // 성공시 캐시 업데이트
+              const cache = await caches.open(cacheName);
+              cache.put(e.request, networkResponse.clone());
+              return networkResponse;
             }
-            
-            // 네트워크에서 가져오기
-            try {
-                response = await fetch(uncompressedRequest);
-                if (response.ok) {
-                    const cache = await caches.open(cacheName);
-                    cache.put(uncompressedRequest, response.clone());
-                    console.log(`[Service Worker] Cached new resource: ${uncompressedUrl}`);
-                }
-                return response;
-            } catch (error) {
-                console.error(`[Service Worker] Fetch failed: ${uncompressedUrl}`, error);
-                throw error;
-            }
+          } catch (networkError) {
+            console.log(`[Service Worker] Network failed for ${e.request.url}, trying cache`);
+          }
+          
+          // 네트워크 실패시 캐시에서 제공
+          const cachedResponse = await caches.match(e.request);
+          if (cachedResponse) {
+            return cachedResponse;
+          }
         }
-        
-        // 일반 파일 처리
-        let response = await caches.match(request);
+
+        // 일반 리소스는 캐시 우선, 실패시 네트워크
+        let response = await caches.match(e.request);
         if (response) {
-            console.log(`[Service Worker] Serving cached: ${request.url}`);
-            return response;
+          console.log(`[Service Worker] Serving from cache: ${e.request.url}`);
+          return response;
+        }
+
+        // 캐시에 없으면 네트워크에서 가져오기
+        console.log(`[Service Worker] Fetching from network: ${e.request.url}`);
+        response = await fetch(e.request);
+        
+        // 성공적인 응답만 캐시에 저장
+        if (response && response.status === 200 && response.type === 'basic') {
+          const cache = await caches.open(cacheName);
+          console.log(`[Service Worker] Caching new resource: ${e.request.url}`);
+          cache.put(e.request, response.clone());
         }
         
-        // 네트워크에서 가져오기
-        try {
-            response = await fetch(request);
-            if (response.ok) {
-                const cache = await caches.open(cacheName);
-                cache.put(request, response.clone());
-                console.log(`[Service Worker] Cached new resource: ${request.url}`);
-            }
-            return response;
-        } catch (error) {
-            console.error(`[Service Worker] Fetch failed: ${request.url}`, error);
-            throw error;
+        return response;
+      } catch (error) {
+        console.error(`[Service Worker] Fetch failed for ${e.request.url}:`, error);
+        
+        // 오프라인 상태에서 기본 페이지 제공
+        if (e.request.destination === 'document') {
+          return caches.match('/index.html');
         }
+        
+        throw error;
+      }
     })());
 });
 
-// 캐시 정리 (새로운 버전 배포 시)
 self.addEventListener('activate', function (e) {
+    console.log('[Service Worker] Activate');
+    
     e.waitUntil((async function () {
-        const cacheNames = await caches.keys();
-        await Promise.all(
-            cacheNames.map(function (cacheName) {
-                if (cacheName !== cacheName) {
-                    console.log('[Service Worker] Deleting old cache:', cacheName);
-                    return caches.delete(cacheName);
-                }
-            })
-        );
+      // 이전 캐시 정리
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map(function (oldCacheName) {
+          if (oldCacheName !== cacheName) {
+            console.log('[Service Worker] Deleting old cache:', oldCacheName);
+            return caches.delete(oldCacheName);
+          }
+        })
+      );
+      
+      // 클라이언트들에게 새로운 Service Worker 활성화 알림
+      self.clients.claim();
     })());
+});
+
+// 메시지 처리 (Unity와의 통신)
+self.addEventListener('message', function (e) {
+    if (e.data && e.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
