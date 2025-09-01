@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Unity WebGL 게임 사이트
+Sitemap: https://your-domain.vercel.app/sitemap.xml

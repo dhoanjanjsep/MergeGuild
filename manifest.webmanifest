@@ -1,0 +1,31 @@
+{
+    "name": "MergeGuild - Unity WebGL Game",
+    "short_name": "MergeGuild",
+    "start_url": "./index.html",
+    "display": "fullscreen",
+    "background_color": "#231F20",
+    "theme_color": "#231F20",
+    "description": "MergeGuild Unity WebGL 게임",
+    "orientation": "portrait",
+    "scope": "./",
+    "lang": "ko",
+    "icons": [
+      {
+        "src": "TemplateData/icons/unity-logo-dark.png",
+        "sizes": "144x144",
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "TemplateData/icons/unity-logo-light.png",
+        "sizes": "144x144",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "TemplateData/favicon.ico",
+        "sizes": "32x32",
+        "type": "image/x-icon"
+      }
+    ]
+  }
