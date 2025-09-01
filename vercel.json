@@ -1,10 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "echo 'Unity WebGL 정적 사이트 - 빌드 불필요'",
-  "outputDirectory": ".",
-  "installCommand": "echo 'Unity WebGL 정적 사이트 - 설치 불필요'",
-  "framework": null,
-  "functions": {},
   "builds": [
     {
       "src": "**/*",
