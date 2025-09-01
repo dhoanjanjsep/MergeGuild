@@ -1,0 +1,28 @@
+{
+  "name": "mergeguild-unity-webgl",
+  "version": "1.0.0",
+  "description": "MergeGuild Unity WebGL Game for Vercel Deployment",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Unity WebGL 정적 사이트 - 빌드 불필요'",
+    "start": "echo 'Unity WebGL 정적 사이트 - 로컬 서버 시작'",
+    "vercel-build": "echo 'Vercel 빌드 완료'"
+  },
+  "keywords": [
+    "unity",
+    "webgl",
+    "game",
+    "vercel",
+    "static-site"
+  ],
+  "author": "MergeGuild Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "vercel": {
+    "buildCommand": "npm run vercel-build",
+    "outputDirectory": ".",
+    "framework": null
+  }
+}
