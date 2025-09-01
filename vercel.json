@@ -108,10 +108,5 @@
         }
       ]
     }
-  ],
-  "functions": {
-    "ServiceWorker.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
