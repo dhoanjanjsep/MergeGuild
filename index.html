@@ -9,6 +9,16 @@
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
     <link rel="manifest" href="manifest.webmanifest">
+    
+    <!-- PWA 메타 태그 추가 -->
+    <meta name="theme-color" content="#231F20">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MergeGuild">
+    
+    <!-- Unity WebGL 최적화를 위한 메타 태그 -->
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
   </head>
   <body>
     <div id="unity-container">
@@ -28,12 +38,27 @@
       </div>
     </div>
     <script>
-      // Service Worker 등록
+      // Service Worker 등록 (Vercel 배포 최적화)
       window.addEventListener("load", function () {
         if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.register("./ServiceWorker.js", { scope: "./" })
+          // Vercel에서는 절대 경로 사용
+          navigator.serviceWorker.register("/ServiceWorker.js", { scope: "/" })
             .then(function(registration) {
               console.log('Service Worker 등록 성공:', registration.scope);
+              
+              // 업데이트 확인
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // 새 버전이 설치되었을 때 사용자에게 알림
+                    if (confirm('새로운 버전이 사용 가능합니다. 지금 업데이트하시겠습니까?')) {
+                      newWorker.postMessage({ type: 'SKIP_WAITING' });
+                      location.reload();
+                    }
+                  }
+                });
+              });
             })
             .catch(function(error) {
               console.log('Service Worker 등록 실패:', error);
@@ -71,15 +96,15 @@
         updateBannerVisibility();
       }
 
-      // Unity 설정
-      var buildUrl = "Build";
+      // Unity 설정 (Vercel 배포 최적화)
+      var buildUrl = "/Build";
       var loaderUrl = buildUrl + "/f5b63b7c68733ee98df217b2cfcc2550.loader.js";
       var config = {
         arguments: [],
         dataUrl: buildUrl + "/dfcd9f1a23137191c55a9d735cf19f32.data.br",
         frameworkUrl: buildUrl + "/79f1647bdbc9ea3cc3418a3b86614b0c.framework.js.br",
         codeUrl: buildUrl + "/a7624d6a54ff9dbef135031d6bc9463a.wasm.br",
-        streamingAssetsUrl: "StreamingAssets",
+        streamingAssetsUrl: "/StreamingAssets",
         companyName: "MergeGuild",
         productName: "MergeGuild Game",
         productVersion: "1.0",
@@ -109,6 +134,9 @@
           console.log('Unity 인스턴스 생성 성공');
           loadingBar.style.display = "none";
           errorDiv.style.display = "none";
+          
+          // 게임 인스턴스 전역 저장
+          window.unityInstance = unityInstance;
         }).catch((message) => {
           console.error('Unity 인스턴스 생성 실패:', message);
           errorDiv.style.display = "block";

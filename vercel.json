@@ -10,7 +10,9 @@
     {
       "src": "/Build/(.*)",
       "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cross-Origin-Embedder-Policy": "require-corp",
+        "Cross-Origin-Opener-Policy": "same-origin"
       }
     },
     {
@@ -29,7 +31,9 @@
       "src": "/(.*\\.wasm)",
       "headers": {
         "Content-Type": "application/wasm",
-        "Cache-Control": "public, max-age=31536000, immutable"
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cross-Origin-Embedder-Policy": "require-corp",
+        "Cross-Origin-Opener-Policy": "same-origin"
       }
     },
     {
@@ -41,7 +45,9 @@
     {
       "src": "/(.*\\.framework\\.js)",
       "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cross-Origin-Embedder-Policy": "require-corp",
+        "Cross-Origin-Opener-Policy": "same-origin"
       }
     },
     {
@@ -55,6 +61,20 @@
       "headers": {
         "Content-Encoding": "br",
         "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/ServiceWorker.js",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Service-Worker-Allowed": "/"
+      }
+    },
+    {
+      "src": "/manifest.webmanifest",
+      "headers": {
+        "Content-Type": "application/manifest+json",
+        "Cache-Control": "no-cache"
       }
     },
     {
@@ -73,8 +93,25 @@
         {
           "key": "Cross-Origin-Opener-Policy",
           "value": "same-origin"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "ServiceWorker.js": {
+      "maxDuration": 30
+    }
+  }
 }

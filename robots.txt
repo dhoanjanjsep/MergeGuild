@@ -1,5 +1,14 @@
 User-agent: *
 Allow: /
 
-# Unity WebGL 게임 사이트
-Sitemap: https://your-domain.vercel.app/sitemap.xml
+# Unity WebGL 게임 파일들 허용
+Allow: /Build/
+Allow: /TemplateData/
+Allow: /StreamingAssets/
+
+# PWA 파일들 허용
+Allow: /manifest.webmanifest
+Allow: /ServiceWorker.js
+
+# Sitemap (선택사항)
+# Sitemap: https://your-domain.vercel.app/sitemap.xml

@@ -5,18 +5,27 @@
   "main": "index.html",
   "scripts": {
     "build": "echo 'Unity WebGL 정적 사이트 - 빌드 불필요'",
-    "start": "echo 'Unity WebGL 정적 사이트 - 로컬 서버 시작'"
+    "start": "echo 'Unity WebGL 정적 사이트 - 로컬 서버 시작'",
+    "vercel-build": "echo 'Vercel 배포를 위한 빌드 완료'",
+    "postinstall": "echo 'Unity WebGL 프로젝트 설치 완료'"
   },
   "keywords": [
     "unity",
     "webgl",
     "game",
     "vercel",
-    "static-site"
+    "static-site",
+    "pwa",
+    "mergeguild"
   ],
   "author": "MergeGuild Team",
   "license": "MIT",
   "engines": {
     "node": ">=14.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mergeguild/unity-webgl-game"
+  },
+  "homepage": "https://mergeguild-game.vercel.app"
 }
