@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+    <meta name="description" content="MergeGuild - Unity WebGL Game">
+    <meta name="theme-color" content="#231F20">
+    <title>MergeGuild</title>
+    
+    <!-- PWA 지원 -->
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    
+    <!-- Unity WebGL 최적화를 위한 메타 태그 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- 성능 최적화 -->
+    <link rel="preload" href="Build/f5b63b7c68733ee98df217b2cfcc2550.loader.js" as="script">
+    <link rel="preload" href="Build/79f1647bdbc9ea3cc3418a3b86614b0c.framework.js.br" as="script" crossorigin="anonymous">
+    <link rel="preload" href="Build/a2695f08e995c006b2c50afa641dc839.data.br" as="fetch" crossorigin="anonymous">
+    <link rel="preload" href="Build/a7624d6a54ff9dbef135031d6bc9463a.wasm.br" as="fetch" crossorigin="anonymous">
+  </head>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas" width=1080 height=1920 tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
+    </div>
+    
+    <script>
+      // Service Worker 등록
+      window.addEventListener("load", function () {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("ServiceWorker.js")
+            .then(function(registration) {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(function(error) {
+              console.log('ServiceWorker registration failed: ', error);
+            });
+        }
+      });
+
+      // Unity 관련 DOM 요소들
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var warningBanner = document.querySelector("#unity-warning");
+
+      // 경고/에러 메시지 표시 함수
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px; color: white;';
+        else {
+          if (type == 'warning') div.style = 'background: orange; padding: 10px; color: black;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      // Unity 빌드 설정
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/f5b63b7c68733ee98df217b2cfcc2550.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/a2695f08e995c006b2c50afa641dc839.data.br",
+        frameworkUrl: buildUrl + "/79f1647bdbc9ea3cc3418a3b86614b0c.framework.js.br",
+        codeUrl: buildUrl + "/a7624d6a54ff9dbef135031d6bc9463a.wasm.br",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "MergeGuild",
+        productName: "MergeGuild",
+        productVersion: "1.0",
+        showBanner: unityShowBanner,
+        // WebGL 성능 최적화 설정
+        matchWebGLToCanvasSize: true,
+        devicePixelRatio: window.devicePixelRatio || 1
+      };
+
+      // 모바일 디바이스 최적화
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // 모바일에서는 전체 화면으로 설정
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+        
+        // 모바일 터치 이벤트 최적화
+        canvas.style.touchAction = 'none';
+      }
+
+      // 로딩 바 표시
+      loadingBar.style.display = "block";
+
+      // Unity 로더 스크립트 로드
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        // Unity 인스턴스 생성
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          loadingBar.style.display = "none";
+          console.log('Unity WebGL loaded successfully');
+          
+          // Unity 인스턴스 전역 저장 (디버깅용)
+          window.unityInstance = unityInstance;
+          
+          // 창 크기 변경 시 Unity 캔버스 크기 조정
+          window.addEventListener('resize', function() {
+            if (unityInstance && unityInstance.SendMessage) {
+              unityInstance.SendMessage('GameManager', 'OnWindowResize');
+            }
+          });
+          
+        }).catch((message) => {
+          console.error('Unity WebGL failed to load:', message);
+          unityShowBanner('Unity WebGL 로딩 실패: ' + message, 'error');
+        });
+      };
+      
+      script.onerror = () => {
+        unityShowBanner('Unity 로더 스크립트 로딩 실패', 'error');
+      };
+      
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
